@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1789660887152,
+    "name": "Shadow-1",
+    "wave": 9,
+    "kills": 82,
+    "survivalTime": 420,
+    "date": "2026-09-17"
+  },
+  {
+    "id": 1,
+    "name": "Ghost-Actual",
+    "wave": 8,
+    "kills": 74,
+    "survivalTime": 395,
+    "date": "2026-09-17"
+  },
+  {
+    "id": 2,
+    "name": "Sgt. Vance",
+    "wave": 6,
+    "kills": 51,
+    "survivalTime": 288,
+    "date": "2026-09-17"
+  },
+  {
+    "id": 3,
+    "name": "Recon-9",
+    "wave": 4,
+    "kills": 32,
+    "survivalTime": 190,
+    "date": "2026-09-17"
+  },
+  {
+    "id": 1789661388315,
+    "name": "Operative",
+    "wave": 1,
+    "kills": 0,
+    "survivalTime": 73,
+    "date": "2026-09-17"
+  }
+]

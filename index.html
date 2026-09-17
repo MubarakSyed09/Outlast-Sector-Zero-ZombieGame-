@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>OUTLAST: SECTOR ZERO - Tactical Survival Horror</title>
+  <link rel="stylesheet" href="public/css/style.css">
+
+  <!-- Load Three.js r128 and official loaders from public reliable CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
+</head>
+<body>
+  <div id="canvas-container"></div>
+  <div id="vignette-overlay"></div>
+  <div id="damage-flash"></div>
+  <div id="heal-flash"></div>
+  <div id="scanlines"></div>
+
+  <!-- Reticle & Hit Marker -->
+  <div id="crosshair">
+    <div id="crosshair-dot"></div>
+  </div>
+  <div id="hit-marker"></div>
+
+  <!-- HUD Top Bar -->
+  <div id="hud-top">
+    <div class="hud-panel">
+      <div class="hud-title">Quarantine Sector</div>
+      <div class="hud-value" id="hud-sector">SECTOR 1</div>
+    </div>
+
+    <div class="hud-panel" id="objective-box">
+      <div class="hud-title">Extraction Beacon</div>
+      <div class="hud-value">
+        <span id="objective-dist">0m</span>
+        <span id="compass-arrow">⬆</span>
+      </div>
+    </div>
+
+    <!-- Threat Radar / Minimap -->
+    <div class="hud-panel" id="radar-container">
+      <div class="hud-title">Threat Radar</div>
+      <canvas id="radar-canvas" width="110" height="110"></canvas>
+      <div style="font-size: 11px; color: #f43f5e; font-weight: 700; margin-top: 4px;" id="hud-zombies">10 ACTIVE</div>
+    </div>
+  </div>
+
+  <!-- HUD Bottom Bar: Vitals & Weapon Status -->
+  <div id="hud-bottom">
+    <!-- Health & Stamina -->
+    <div class="vitals-box">
+      <div class="gauge-row">
+        <div class="gauge-header">
+          <span style="color: #4ade80;">Vitals / HP</span>
+          <span id="health-text" style="color: #4ade80;">100 / 100</span>
+        </div>
+        <div class="gauge-bar-outer">
+          <div id="health-bar-fill"></div>
+        </div>
+      </div>
+
+      <div class="gauge-row">
+        <div class="gauge-header">
+          <span style="color: #38bdf8;">Stamina</span>
+          <span id="stamina-text" style="color: #38bdf8;">100%</span>
+        </div>
+        <div class="gauge-bar-outer">
+          <div id="stamina-bar-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Weapon & Ammo -->
+    <div class="weapon-box">
+      <div class="weapon-name-row">
+        <span id="weapon-icon">🔫</span>
+        <span id="weapon-name">Tactical 9mm</span>
+      </div>
+      <div class="ammo-counter-row">
+        <span id="ammo-mag">12</span>
+        <span id="ammo-reserve">/ 48</span>
+      </div>
+      <div id="slot-bar">
+        <div class="slot-badge active" data-weapon="pistol">[1] 9mm PISTOL</div>
+        <div class="slot-badge" data-weapon="shotgun">[2] 12G SHOTGUN</div>
+      </div>
+      <div id="weapon-status-tip">[L-CLICK] FIRE | [R] RELOAD | [1/2] SWITCH</div>
+    </div>
+  </div>
+
+  <div id="notif-banner">TACTICAL PROTOCOL ENGAGED</div>
+
+  <!-- Start Screen -->
+  <div class="screen-overlay" id="start-screen">
+    <h1 class="horror-title">OUTLAST: <span>SECTOR ZERO</span></h1>
+    <p class="horror-subtitle">
+      Perimeter defenses have collapsed. The infected swarm through the fog. 
+      Utilize your Tactical Pistol and Combat Shotgun to eliminate hostiles, scavenge glowing ammo and medkits, and push through to the green extraction beacon.
+    </p>
+    <button class="btn-action" id="start-btn">DEPLOY OPERATIVE</button>
+    <div class="instructions-card">
+      <div><span>[W, A, S, D]</span> Move & Strafe</div>
+      <div><span>[SHIFT]</span> Sprint (Drains Stamina)</div>
+      <div><span>[MOUSE]</span> Aim & Look (Pointer Lock)</div>
+      <div><span>[LEFT-CLICK]</span> Fire Equipped Weapon</div>
+      <div><span>[R]</span> Reload Weapon</div>
+      <div><span>[1 / 2 or WHEEL]</span> Switch Pistol / Shotgun</div>
+      <div><span>[F]</span> Toggle Flashlight Beam</div>
+      <div><span>[SPACE / E]</span> UV Stun Pulse (When Unlocked)</div>
+    </div>
+  </div>
+
+  <!-- Game Over Screen with Leaderboard -->
+  <div class="screen-overlay hidden" id="gameover-screen">
+    <h1 class="horror-title" style="text-shadow: 0 0 35px #e11d48;">OPERATIVE <span>DOWN</span></h1>
+    <p class="horror-subtitle" id="death-stats">
+      Vital signs terminated. Quarantine containment compromised.
+    </p>
+
+    <!-- Dynamic Leaderboard from Backend -->
+    <div id="leaderboard-content"></div>
+
+    <button class="btn-action" id="retry-btn">RE-ENGAGE SECTOR</button>
+  </div>
+
+  <!-- Perk Requisition Modal -->
+  <div class="screen-overlay hidden" id="perk-modal">
+    <h1 class="horror-title" style="color: #4ade80; text-shadow: 0 0 30px rgba(74, 222, 128, 0.7);">
+      EXTRACTION <span>SECURED</span>
+    </h1>
+    <p class="horror-subtitle">
+      Emergency lockdown eliminated local perimeter threats. Requisition a tactical survival perk before sector advance.
+    </p>
+    <div class="perk-container" id="perk-cards">
+      <!-- Generated Dynamically -->
+    </div>
+  </div>
+
+  <!-- Load Game Modules in Proper Dependency Order -->
+  <script src="public/js/audio.js"></script>
+  <script src="public/js/textures.js"></script>
+  <script src="public/js/weapons.js"></script>
+  <script src="public/js/zombies.js"></script>
+  <script src="public/js/main.js"></script>
+</body>
+</html>
